@@ -1,0 +1,93 @@
+package com.company.jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Properties;
+
+import org.junit.Test;
+
+import com.company.domain.User;
+import com.mysql.jdbc.Driver;
+
+public class JdbcDemo1 {
+
+	@Test
+	public void test1() {
+		// 1 加载注册
+
+		Connection connection = null;
+		// 3 获取执行sql的对象
+		Statement s = null;
+		ResultSet executeQuery = null;
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+
+			connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/test?user=root&password=root");
+
+			s = connection.createStatement();
+
+			// 4 执行sql,返回结果集类型
+
+			executeQuery = s.executeQuery("select * from hero");
+			// 创建集合对象
+			ArrayList<User> al = new ArrayList<User>();
+
+			// 5 遍历 ,根据字段来获取
+
+			while (executeQuery.next()) {
+				User user = new User(); // 创建对象一定要在循环里面创建，一条信息要创建一个对象
+				user.setId(executeQuery.getInt("id"));
+				user.setName(executeQuery.getString("name"));
+				user.setAge(executeQuery.getString("age"));
+
+				// 添加到集合当中
+				al.add(user);
+			}
+
+			for (User u : al) {
+				System.out.println(u);
+			}
+			// 断开资源
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {          // 上面代码成体try ，下面的关闭流每一个都要单独抛异常
+			if (s != null) {
+				try {
+					s.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			if (connection != null) {
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			if (executeQuery != null) {
+				try {
+					executeQuery.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+
+	}
+
+}
