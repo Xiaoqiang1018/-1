@@ -1,0 +1,75 @@
+package com.company.jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+
+import org.junit.Test;
+
+import com.mysql.jdbc.Driver;
+
+public class JdbcDemo1 {
+	
+	
+	@Test
+	public void test1() throws Exception{
+//		1 加载注册
+		
+			Class.forName("com.mysql.jdbc.Driver");
+	
+//		2 创建连接
+		String url="jdbc:mysql://localhost:3306/test";
+		Properties info =new Properties();
+		info.setProperty("user", "root");
+		info.setProperty("password", "root");
+		
+	
+			Connection connection = DriverManager.getConnection(url,info);
+	
+//		3 获取执行sql的对象
+			Statement s = connection.createStatement();
+		
+		
+//		4 执行sql,返回结果集类型
+
+				ResultSet executeQuery = s.executeQuery("select * from hero");
+	
+//			5 遍历
+			try {
+				while(executeQuery.next()){
+					System.out.print(executeQuery.getObject(1)+"\t");  //第一列
+					System.out.print(executeQuery.getObject(2)+"\t");  //第二列
+//					System.out.print(executeQuery.getObject(3)+"\t");  //第三列
+					System.out.println();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+//			断开资源
+			try {
+				s.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			try {
+				executeQuery.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
+
+}
