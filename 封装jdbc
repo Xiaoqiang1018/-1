@@ -1,0 +1,130 @@
+import org.junit.Test;
+
+import java.sql.*;
+import java.util.ResourceBundle;
+
+/*
+    封装一个DButils,在src下创建一个dbinfo.properties的配置文件
+*/
+public class JdbcDemo4 {
+
+    private static String driver;
+    private static String url;
+    private static String user;
+    private static String password;
+
+    static {
+//        加载配置文件
+        ResourceBundle rb = ResourceBundle.getBundle("dbinfo");//通过配置文件名称来获取配置文件
+        driver = rb.getString("driver");
+        url = rb.getString("url");
+        user = rb.getString("user");
+        password = rb.getString("password");
+
+//        1 加载驱动,在静态代码块中加载
+        try {
+            Class.forName(driver);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+//    获取连接
+
+    public static Connection getconnection() throws Exception {
+
+        return DriverManager.getConnection(url, user, password);
+    }
+//    释放资源
+
+    public static void closeAll(ResultSet rs, Connection c, Statement s) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (c != null) {
+            try {
+                c.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (s != null) {
+            try {
+                s.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void closeAll(Connection c, Statement s) {
+        if (c != null) {
+            try {
+                c.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (s != null) {
+            try {
+                s.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+}
+
+
+
+
+
+
+//测试
+
+import org.junit.Test;
+
+import java.sql.*;
+/*
+* idea中配置文件放的位置不对，运行该程序回报错【Can't find bundle for base name；或java.lang.NoClassDefFoundError错误】，
+* 我将配置文件与此类放在同一个包了，
+* 在eclipse中配置文件放在src下即可
+*
+* */
+
+public class TestJdbc {
+
+    @Test
+    public void test1() {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+//        调用封装的工具，加载驱动并获取连接
+            connection = JdbcDemo4.getconnection();
+//        获取执行sql的对象
+            statement = connection.createStatement();
+//        执行sql
+            int i = statement.executeUpdate("insert into hero values(11,'张三',10)");
+/*            System.out.println(i);
+            resultSet = statement.executeQuery("select * from hero");
+            while (resultSet.next()) {
+                System.out.print(resultSet.getInt("id") + "\t");
+                System.out.print(resultSet.getString("name") + "\t");
+                System.out.print(resultSet.getInt("age") + "\t");
+                System.out.println();
+            }*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            JdbcDemo4.closeAll(connection,statement);
+        }
+
+    }
+}
+
