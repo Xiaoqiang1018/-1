@@ -1,75 +1,204 @@
-package com.company.jdbc;
+package com.company.jdbcdao;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.List;
 import java.util.Properties;
+import java.util.ResourceBundle;
+
+/**
+ * @projectname jdbc工具类
+ * @author lenovo
+ * @date 2018年12月17日
+ * 
+ */
+public class JdbcUtils {
+	
+	private static String url ;
+	private static String user ;
+	private static String password ;
+	
+	static{
+		ResourceBundle bundle = ResourceBundle.getBundle("userdb");
+		url=bundle.getString("url");
+		user=bundle.getString("user");
+		password=bundle.getString("password");
+	}
+	
+
+	private Connection connection = null;
+	private PreparedStatement statement = null;
+	private ResultSet resultSet = null;
+
+	// 只需注册一次，只要不管mysql服务。
+	static {
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	// 连接数据库
+	public Connection open() {
+		try {
+			connection = DriverManager.getConnection(url, user, password);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return connection;
+	}
+
+	// 查询数据库,参数用集合来装
+	public ResultSet query(String sql, List<Object> param) {
+		try {
+			if (connection == null || connection.isClosed()) {
+				open();
+			}
+
+			// 进行预编译，主要防止sql注入
+			statement = connection.prepareStatement(sql);
+			// 设置查询参数
+			for (int i = 0; i < param.size(); i++) {
+				statement.setObject(i + 1, param.get(i));
+			}
+
+			// 查询
+			resultSet = statement.executeQuery();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return resultSet;
+	}
+
+	// update，insert，delete操作
+
+	public int queryUpdate(String sql, List<Object> param) {
+		int a = 0;
+
+		try {
+			if (connection == null || connection.isClosed()) {
+				open();
+			}
+			// 进行预编译
+			statement = connection.prepareStatement(sql);
+			// 遍历集合设置参数
+			for (int i = 0; i < param.size(); i++) {
+				statement.setObject(i + 1, param.get(i));
+			}
+
+			a = statement.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return a;
+	}
+
+	public void close() throws SQLException {
+		if (resultSet != null ) {
+			try {
+				resultSet.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		if (statement != null ) {
+			try {
+				statement.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		if (connection != null && !connection.isClosed()) {
+			connection.close();
+		}
+	}
+}
+
+------------------测试-------------------
+
+package com.company.daoImpl;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
-import com.mysql.jdbc.Driver;
+import com.company.jdbcdao.JdbcUtils;
 
 public class JdbcDemo1 {
 	
-	
 	@Test
-	public void test1() throws Exception{
-//		1 加载注册
+	public void test(){
+		List<Object> list=new ArrayList<Object>();
+		String sql="select * from student where s=?";
+		list.add(01);
 		
-			Class.forName("com.mysql.jdbc.Driver");
-	
-//		2 创建连接
-		String url="jdbc:mysql://localhost:3306/test";
-		Properties info =new Properties();
-		info.setProperty("user", "root");
-		info.setProperty("password", "root");
+		JdbcUtils ju = new JdbcUtils();
+		try {
+			ju.open();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ResultSet resultSet = ju.query(sql, list);
+		try {
+			while(resultSet.next()){
+				System.out.print(resultSet.getString("s")+"\t");
+				System.out.print(resultSet.getString("sname")+"\t");
+				System.out.print(resultSet.getDate("sage")+"\t");
+				System.out.print(resultSet.getString("s")+"\t");
+				System.out.println();
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
+		try {
+			ju.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
-			Connection connection = DriverManager.getConnection(url,info);
-	
-//		3 获取执行sql的对象
-			Statement s = connection.createStatement();
+//	测试增删改
+	@Test
+	public void test2(){
+		String sql="insert into student(sname,ssex) values(?,?)";
+		List<Object> list=new ArrayList<Object>();
+		list.add("张三");
+		list.add("男");
 		
+		JdbcUtils ju = new JdbcUtils();
+		ju.open();
+		int i = ju.queryUpdate(sql, list);
 		
-//		4 执行sql,返回结果集类型
-
-				ResultSet executeQuery = s.executeQuery("select * from hero");
-	
-//			5 遍历
-			try {
-				while(executeQuery.next()){
-					System.out.print(executeQuery.getObject(1)+"\t");  //第一列
-					System.out.print(executeQuery.getObject(2)+"\t");  //第二列
-//					System.out.print(executeQuery.getObject(3)+"\t");  //第三列
-					System.out.println();
-				}
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-//			断开资源
-			try {
-				s.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				connection.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			try {
-				executeQuery.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		System.out.println("受影响的行数"+i);
+		try {
+			ju.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 }
+
